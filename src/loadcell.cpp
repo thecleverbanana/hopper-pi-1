@@ -1,43 +1,45 @@
 #include "loadcell.h"
-#include <wiringPi.h>
+#include <pigpio.h>
 #include <iostream>
 
 LoadCell::LoadCell(int pin_dt, int pin_sck)
     : dt_pin(pin_dt), sck_pin(pin_sck) {}
 
-LoadCell::~LoadCell() {}
+LoadCell::~LoadCell() {
+    // Optionally stop pigpio here if you started it in initialize()
+}
 
 bool LoadCell::initialize() {
-    if (wiringPiSetupGpio() == -1) { // Use BCM GPIO numbering
-        std::cerr << "Failed to initialize wiringPi\n";
+    if (gpioInitialise() < 0) {
+        std::cerr << "Failed to initialize pigpio\n";
         return false;
     }
-    pinMode(dt_pin, INPUT);
-    pinMode(sck_pin, OUTPUT);
-    digitalWrite(sck_pin, LOW);
+    gpioSetMode(dt_pin, PI_INPUT);
+    gpioSetMode(sck_pin, PI_OUTPUT);
+    gpioWrite(sck_pin, PI_LOW);
     return true;
 }
 
 long LoadCell::read_raw() {
     // Wait for HX711 to become ready (DT pin goes LOW)
-    while (digitalRead(dt_pin) == HIGH) {
-        delayMicroseconds(10);
+    while (gpioRead(dt_pin) == 1) {
+        gpioDelay(10); // microseconds
     }
 
     long value = 0;
     for (int i = 0; i < 24; ++i) {
-        digitalWrite(sck_pin, HIGH);
-        delayMicroseconds(1);
-        value = (value << 1) | digitalRead(dt_pin);
-        digitalWrite(sck_pin, LOW);
-        delayMicroseconds(1);
+        gpioWrite(sck_pin, PI_HIGH);
+        gpioDelay(1);
+        value = (value << 1) | gpioRead(dt_pin);
+        gpioWrite(sck_pin, PI_LOW);
+        gpioDelay(1);
     }
 
     // Set gain (1 more clock pulse)
-    digitalWrite(sck_pin, HIGH);
-    delayMicroseconds(1);
-    digitalWrite(sck_pin, LOW);
-    delayMicroseconds(1);
+    gpioWrite(sck_pin, PI_HIGH);
+    gpioDelay(1);
+    gpioWrite(sck_pin, PI_LOW);
+    gpioDelay(1);
 
     // Convert to signed 24-bit value
     if (value & 0x800000) {
