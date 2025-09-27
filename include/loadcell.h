@@ -7,6 +7,7 @@ public:
 
     bool initialize();
     long read_raw();
+    
 
 private:
     int dt_pin;
