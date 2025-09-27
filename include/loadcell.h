@@ -1,17 +1,14 @@
 #pragma once
-#include <string>
-#include <vector>
 
 class LoadCell {
 public:
-    LoadCell(const std::string& i2c_device, int address);
+    LoadCell(int pin_dt, int pin_sck);
     ~LoadCell();
 
     bool initialize();
-    std::vector<uint8_t> read(size_t length);
+    long read_raw();
 
 private:
-    int i2c_fd;
-    int i2c_addr;
-    std::string device;
+    int dt_pin;
+    int sck_pin;
 };

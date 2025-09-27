@@ -17,19 +17,16 @@ int main() {
     for (auto b : imu_data) std::cout << " " << std::hex << (int)b;
     std::cout << std::dec << std::endl;
 
-    LoadCell lc("/dev/i2c-1", 0x2A); // Replace 0x2A with your load cell's I2C address
+    // Update: Use GPIO pins for LoadCell, not I2C
+    int PIN_DT = 5;   // GPIO5
+    int PIN_SCK = 6;  // GPIO6
+    LoadCell lc(PIN_DT, PIN_SCK);
     if (!lc.initialize()) {
         std::cerr << "LoadCell init failed\n";
         return 1;
     }
-    auto lc_data = lc.read(3); // Example: read 3 bytes (typical for 24-bit ADC)
-    if (lc_data.empty()) {
-        std::cerr << "LoadCell read failed\n";
-        return 1;
-    }
-    std::cout << "LoadCell raw data:";
-    for (auto b : lc_data) std::cout << " " << std::hex << (int)b;
-    std::cout << std::dec << std::endl;
+    long raw = lc.read_raw();
+    std::cout << "LoadCell raw value: " << raw << std::endl;
 
     return 0;
 }

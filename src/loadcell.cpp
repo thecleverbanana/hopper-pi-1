@@ -1,35 +1,48 @@
 #include "loadcell.h"
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <linux/i2c-dev.h>
+#include <wiringPi.h>
 #include <iostream>
 
-LoadCell::LoadCell(const std::string& i2c_device, int address)
-    : i2c_fd(-1), i2c_addr(address), device(i2c_device) {}
+LoadCell::LoadCell(int pin_dt, int pin_sck)
+    : dt_pin(pin_dt), sck_pin(pin_sck) {}
 
-LoadCell::~LoadCell() {
-    if (i2c_fd >= 0) close(i2c_fd);
-}
+LoadCell::~LoadCell() {}
 
 bool LoadCell::initialize() {
-    i2c_fd = open(device.c_str(), O_RDWR);
-    if (i2c_fd < 0) {
-        std::cerr << "Failed to open I2C device\n";
+    if (wiringPiSetupGpio() == -1) { // Use BCM GPIO numbering
+        std::cerr << "Failed to initialize wiringPi\n";
         return false;
     }
-    if (ioctl(i2c_fd, I2C_SLAVE, i2c_addr) < 0) {
-        std::cerr << "Failed to set I2C address\n";
-        close(i2c_fd);
-        i2c_fd = -1;
-        return false;
-    }
+    pinMode(dt_pin, INPUT);
+    pinMode(sck_pin, OUTPUT);
+    digitalWrite(sck_pin, LOW);
     return true;
 }
 
-std::vector<uint8_t> LoadCell::read(size_t length) {
-    if (i2c_fd < 0) return {};
-    std::vector<uint8_t> buf(length);
-    if (::read(i2c_fd, buf.data(), length) != (ssize_t)length) return {};
-    return buf;
+long LoadCell::read_raw() {
+    // Wait for HX711 to become ready (DT pin goes LOW)
+    while (digitalRead(dt_pin) == HIGH) {
+        delayMicroseconds(10);
+    }
+
+    long value = 0;
+    for (int i = 0; i < 24; ++i) {
+        digitalWrite(sck_pin, HIGH);
+        delayMicroseconds(1);
+        value = (value << 1) | digitalRead(dt_pin);
+        digitalWrite(sck_pin, LOW);
+        delayMicroseconds(1);
+    }
+
+    // Set gain (1 more clock pulse)
+    digitalWrite(sck_pin, HIGH);
+    delayMicroseconds(1);
+    digitalWrite(sck_pin, LOW);
+    delayMicroseconds(1);
+
+    // Convert to signed 24-bit value
+    if (value & 0x800000) {
+        value |= ~0xFFFFFF;
+    }
+
+    return value;
 }
