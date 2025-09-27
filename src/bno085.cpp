@@ -4,6 +4,8 @@
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
 #include <iostream>
+#include <cstring>
+#include <unistd.h>
 
 // SHTP channels (Sensor Hub Transport Protocol) 
 // https://docs.sparkfun.com/SparkFun_VR_IMU_Breakout_BNO086_QWIIC/assets/component_documentation/Sensor-Hub-Transport-Protocol.pdf
@@ -51,55 +53,47 @@ bool BNO085::shtpWrite(uint8_t channel, const uint8_t* payload, size_t len) {
     if (i2c_fd < 0) return false;
     // SHTP Header: 4 bytes, e.g. [lenL, lenH, channel, seq]
     uint16_t total_len = static_cast<uint16_t>(len + 4);
-    std::vector<uint8_t> frame(total_len);
-    le16(&frame[0], total_len);
-    frame[2] = channel;
-    // Sequence number for control channel
-    if (channel == CHANNEL_CONTROL) frame[3] = seq_control++;
-    else frame[3] = 0;
-
-    if (len) std::memcpy(&frame[4], payload, len);
+   
+    std::vector<uint8_t> frame(total_len + 1);
+    frame[0] = 0x00;                              // register pointer
+    le16(&frame[1], total_len);                   // len lo/hi
+    frame[3] = channel;
+    frame[4] = (channel == CHANNEL_CONTROL) ? seq_control++ : 0;
+    if (len) std::memcpy(&frame[5], payload, len);
 
     ssize_t w = ::write(i2c_fd, frame.data(), frame.size());
     return (w == (ssize_t)frame.size());
 }
+
 
 // read on frame from SHTP (non-blocking)
 bool BNO085::shtpRead(uint8_t& out_channel, std::vector<uint8_t>& out_payload) {
     if (i2c_fd < 0) return false;
 
     uint8_t hdr[4];
+
+    
+    uint8_t reg0 = 0x00;
+    if (::write(i2c_fd, &reg0, 1) != 1) return false;
+
     ssize_t r = ::read(i2c_fd, hdr, 4);
-    if (r < 0) {
-        return false;
-    }
-    if (r != 4) {
-        // if not complete header, ignore
-        return false;
-    }
+    if (r != 4) return false;
 
     uint16_t total_len = (uint16_t)hdr[0] | ((uint16_t)hdr[1] << 8);
-    if (total_len < 4) {
-        // empty/invalid header
-        return false;
-    }
+    if (total_len == 0 || total_len < 4) return false; 
     out_channel = hdr[2];
     uint16_t payload_len = total_len - 4;
-    out_payload.resize(payload_len);
+    if (payload_len > 1024) return false; 
 
-    // read payload
+    uint8_t reg4 = 0x04;
+    if (::write(i2c_fd, &reg4, 1) != 1) return false;
+
+    out_payload.resize(payload_len);
     size_t got = 0;
     while (got < payload_len) {
         ssize_t n = ::read(i2c_fd, out_payload.data() + got, payload_len - got);
-        if (n < 0) {
-            // if no data available, return false
-            usleep(200);
-            continue;
-        }
-        if (n == 0) {
-            usleep(200);
-            continue;
-        }
+        if (n < 0) { usleep(200); continue; }   
+        if (n == 0) { usleep(200); continue; }
         got += (size_t)n;
     }
     return true;
@@ -127,7 +121,9 @@ bool BNO085::enableLinearAcceleration(uint32_t period_us) {
         return false;
     }
 
-    // usleep(2000);
+    std::cerr << "SHTF Linear Acceleration Enabled.\n";
+
+    usleep(2000);
     return true;
 }
 

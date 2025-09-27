@@ -1,5 +1,6 @@
 #include "bno085.h"
 #include <iostream>
+#include <unistd.h>
 
 int main() {
     BNO085 imu("/dev/i2c-1", 0x4B);
@@ -7,9 +8,11 @@ int main() {
         std::cerr << "IMU init failed\n";
         return 1;
     }
+    std::cerr << "IMU initialized\n";
+
     // enable linear acceleration with 10ms interval
     if (!imu.enableLinearAcceleration(10000)) {
-        std::cerr << "Enable Linear Accel failed\n";
+        std:rcerr << "Enable Linear Accel failed\n";
         return 1;
     }
 
@@ -18,8 +21,12 @@ int main() {
         if (imu.readLinearAcceleration(la)) {
             std::cout << "lin acc [m/s^2] "
                       << la.x << ", " << la.y << ", " << la.z << "\n";
-        }
+	}
 
-        usleep(2000);
+	else{ 	
+	std::cerr << "debug\n";
+	}
+
+	usleep(2000);
     }
 }
