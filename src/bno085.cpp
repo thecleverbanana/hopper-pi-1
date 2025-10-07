@@ -5,6 +5,7 @@
 #include <linux/i2c-dev.h>
 #include <iostream>
 
+
 BNO085::BNO085(int i2c_bus, int address) : i2c_bus(i2c_bus), dev_addr(address), i2c_fd(-1) {}
 
 BNO085::~BNO085() {
@@ -22,6 +23,17 @@ bool BNO085::begin() {
         std::cerr << "Failed to set I2C address\n";
         return false;
     }
+
+    // Send calibration command
+    uint8_t cmd[4] = { 0x07, 0x00, 0x05, 0x00 }; // SH2_CMD_ME_CALIBRATION
+    writeBytes(cmd, 4);
+    usleep(10000); // 10 ms delay
+
+    // Optionally save calibration to flash
+    uint8_t saveCmd[4] = { 0x07, 0x00, 0x06, 0x00 }; // SH2_CMD_ME_SAVE_DCD
+    writeBytes(saveCmd, 4);
+
+    std::cout << "BNO085 calibration initialized.\n";
     return true;
 }
 

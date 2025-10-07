@@ -4,6 +4,8 @@
 #include <thread>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
+
 const float RAD2DEG = 180.0f / M_PI;
 
 int main() {
