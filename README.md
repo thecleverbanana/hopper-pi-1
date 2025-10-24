@@ -13,5 +13,7 @@ run the script: `./<>.sh`
 
 ## remote connection
 `rsync -av --delete ~/Desktop/hopper-pi-1/ hopper-pi-1@192.168.8.145:~/hopper-pi-1/`
+rsync -av --delete ./hopper-pi-1/ hopper-pi-1@192.168.8.145:~/hopper-pi-1/
 `rsync -av --delete ~/Desktop/hopper-pi-1/ hopper@192.168.1.1:~/hopper-pi-1/`
+rsync -av --delete ./hopper-pi-1/ hopper@192.168.1.1:~/hopper-pi-1/
 

@@ -20,18 +20,36 @@ int main() {
         return 1;
     }
 
+    // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    // bno.calibrateAccelerometerOffset(100, 10);
+
     while (true) {
-        float ax, ay, az;
+    float ax, ay, az;
         if (bno.getAccelerometer(ax, ay, az)) {
-            std::cout << "Accel (m/s²): " 
-                      << ax << ", " << ay << ", " << az << "\n";
-        } else {
+            bno.applyAccelerometerOffset(ax, ay, az);
+            std::cout << "Accel (m/s²): "
+                    << ax << ", " << ay << ", " << az << "\n";
+        }
+
+        else {
             // std::cerr << "Failed to read accelerometer\n";
         }
 
-        // std::this_thread::sleep_for(std::chrono::milliseconds(10)); // 100 Hz print
-        std::this_thread::sleep_for(std::chrono::microseconds(2500)); // 400 Hz print
+        std::this_thread::sleep_for(std::chrono::microseconds(2500)); // 400 Hz
     }
+
+    // while (true) {
+    //     float ax, ay, az;
+    //     if (bno.getAccelerometer(ax, ay, az)) {
+    //         std::cout << "Accel (m/s²): " 
+    //                   << ax << ", " << ay << ", " << az << "\n";
+    //     } else {
+    //         // std::cerr << "Failed to read accelerometer\n";
+    //     }
+
+    //     // std::this_thread::sleep_for(std::chrono::milliseconds(10)); // 100 Hz print
+    //     std::this_thread::sleep_for(std::chrono::microseconds(2500)); // 400 Hz print
+    // }
 
     // if (!bno.configureRotationVector()) { // 50 Hz
     //     std::cerr << "Failed to configure Rotation Vector\n";

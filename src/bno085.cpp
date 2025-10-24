@@ -65,12 +65,55 @@ std::vector<uint8_t> BNO085::readData(int length) {
 bool BNO085::configureAccelerometer() {
     static uint8_t cargo_no = 1;
     uint8_t cmd[21] = {
-        0x15, 0x00, 0x02, cargo_no++, 0xFD, 0x04, // Sensor ID = 0x04 (Accel)
+        0x15, 0x00, 0x02, cargo_no++, 0xFD, 0x06, // Sensor ID = 0x04 (Accel)
         // 0x00,0x00,0x00, 0x10,0x27, // 100 Hz = 10 ms = 0x2710
         0x00,0x00,0x00, 0xC4,0x09, // 400 Hz = 2.5 ms = 0x09C4
         0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     };
-    return writeBytes(cmd, 21);
+
+    if (!writeBytes(cmd, 21)) {
+        std::cerr << "Failed to configure accelerometer.\n";
+        return false;
+    }
+
+    std::cout << "Accelerometer configured.\n";
+    return true;
+}
+
+bool BNO085::calibrateAccelerometerOffset(int samples, int delay_ms) {
+    float sum_x = 0, sum_y = 0, sum_z = 0;
+    int valid = 0;
+
+    std::cout << "Calibrating accelerometer offset...\n";
+
+    for (int i = 0; i < samples; ++i) {
+        float ax, ay, az;
+        if (getAccelerometer(ax, ay, az)) {
+            sum_x += ax;
+            sum_y += ay;
+            sum_z += az;
+            valid++;
+        } else {
+            std::cerr << "Failed to read accelerometer sample " << i << "\n";
+        }
+        usleep(delay_ms*1000); // 50 ms
+    }
+
+    if (valid == 0) {
+        std::cerr << "No valid accelerometer samples. Calibration failed.\n";
+        return false;
+    }
+
+    accel_offset_x = sum_x / valid;
+    accel_offset_y = sum_y / valid;
+    accel_offset_z = sum_z / valid;
+
+    std::cout << "Accelerometer offset set:\n"
+              << "  X = " << accel_offset_x << "\n"
+              << "  Y = " << accel_offset_y << "\n"
+              << "  Z = " << accel_offset_z << "\n";
+
+    return true;
 }
 
 bool BNO085::getAccelerometer(float &ax, float &ay, float &az) {
@@ -78,15 +121,15 @@ bool BNO085::getAccelerometer(float &ax, float &ay, float &az) {
     if (data.size() < 10) return false;
 
     for (size_t i = 0; i < data.size() - 10; i++) {
-        if (data[i] == 0x04) { // Accelerometer report ID
+        if (data[i] == 0x06) { // Accelerometer report ID
             int16_t raw_x = (int16_t)(data[i+4] | (data[i+5] << 8));
             int16_t raw_y = (int16_t)(data[i+6] | (data[i+7] << 8));
             int16_t raw_z = (int16_t)(data[i+8] | (data[i+9] << 8));
 
-            // Convert from Q8 to m/s²
-            ax = raw_x / 256.0f;
-            ay = raw_y / 256.0f;
-            az = raw_z / 256.0f;
+            // Convert from Q8 to m/s² and subtract offsets
+            ax = raw_x / 256.0f - accel_offset_x;
+            ay = raw_y / 256.0f - accel_offset_y;
+            az = raw_z / 256.0f - accel_offset_z;
 
             return true;
         }

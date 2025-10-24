@@ -1,13 +1,13 @@
 #!/bin/bash
-# Simple build script for BNO085 project
+# Simple build script for LoadCell project using libgpiod
 
-# Exit if any command fails
+# Exit immediately if any command fails
 set -e
 
 # Create build directory if it doesn't exist
 mkdir -p build
 
-# Compile the project
-g++ -Iinclude src/loadcell.cpp read_loadcell.cpp -o build/read_loadcell
+# Compile and link with libgpiod
+g++ -Iinclude src/loadcell.cpp read_loadcell.cpp -o build/read_loadcell -lgpiod
 
-echo "Build complete: ./build/read_bno085"
+echo "Build complete: ./build/read_loadcell"

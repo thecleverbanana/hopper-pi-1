@@ -1,50 +1,57 @@
 #include "loadcell.h"
-#include <pigpio.h>
 #include <iostream>
+#include <unistd.h>
 
-LoadCell::LoadCell(int pin_dt, int pin_sck)
-    : dt_pin(pin_dt), sck_pin(pin_sck) {}
+LoadCell::LoadCell(const char* chipname, int pin_dt, int pin_sck)
+    : chipname(chipname), dt_pin(pin_dt), sck_pin(pin_sck),
+      chip(nullptr), dt_line(nullptr), sck_line(nullptr) {}
 
 LoadCell::~LoadCell() {
-    // Optionally stop pigpio here if you started it in initialize()
+    if (chip) gpiod_chip_close(chip);
 }
 
 bool LoadCell::initialize() {
-    if (gpioInitialise() < 0) {
-        std::cerr << "Failed to initialize pigpio\n";
+    chip = gpiod_chip_open_by_name(chipname);
+    if (!chip) {
+        std::cerr << "Failed to open GPIO chip\n";
         return false;
     }
-    gpioSetMode(dt_pin, PI_INPUT);
-    gpioSetMode(sck_pin, PI_OUTPUT);
-    gpioWrite(sck_pin, PI_LOW);
+
+    dt_line = gpiod_chip_get_line(chip, dt_pin);
+    sck_line = gpiod_chip_get_line(chip, sck_pin);
+    if (!dt_line || !sck_line) {
+        std::cerr << "Failed to get GPIO lines\n";
+        return false;
+    }
+
+    if (gpiod_line_request_input(dt_line, "loadcell") < 0 ||
+        gpiod_line_request_output(sck_line, "loadcell", 0) < 0) {
+        std::cerr << "Failed to request GPIO lines\n";
+        return false;
+    }
+
     return true;
 }
 
 long LoadCell::read_raw() {
-    // Wait for HX711 to become ready (DT pin goes LOW)
-    while (gpioRead(dt_pin) == 1) {
-        gpioDelay(10); // microseconds
+    while (gpiod_line_get_value(dt_line) == 1) {
+        usleep(10); // microseconds
     }
 
     long value = 0;
     for (int i = 0; i < 24; ++i) {
-        gpioWrite(sck_pin, PI_HIGH);
-        gpioDelay(1);
-        value = (value << 1) | gpioRead(dt_pin);
-        gpioWrite(sck_pin, PI_LOW);
-        gpioDelay(1);
+        gpiod_line_set_value(sck_line, 1);
+        usleep(1);
+        value = (value << 1) | gpiod_line_get_value(dt_line);
+        gpiod_line_set_value(sck_line, 0);
+        usleep(1);
     }
 
-    // Set gain (1 more clock pulse)
-    gpioWrite(sck_pin, PI_HIGH);
-    gpioDelay(1);
-    gpioWrite(sck_pin, PI_LOW);
-    gpioDelay(1);
+    gpiod_line_set_value(sck_line, 1);
+    usleep(1);
+    gpiod_line_set_value(sck_line, 0);
+    usleep(1);
 
-    // Convert to signed 24-bit value
-    if (value & 0x800000) {
-        value |= ~0xFFFFFF;
-    }
-
+    if (value & 0x800000) value |= ~0xFFFFFF;
     return value;
 }
