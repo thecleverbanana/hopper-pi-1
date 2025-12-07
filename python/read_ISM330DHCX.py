@@ -41,7 +41,7 @@ def runExample():
 	print("\nQwiic ISM330DHCX Example 1 - Basic Readings\n")
 
 	# Create instance of device
-	myIsm = qwiic_ism330dhcx.QwiicISM330DHCX(address=0x6A)
+	myIsm = qwiic_ism330dhcx.QwiicISM330DHCX(address=0x6B)
 
 	# Check if it's connected
 	if myIsm.is_connected() == False:
@@ -96,4 +96,8 @@ if __name__ == '__main__':
 		runExample()
 	except (KeyboardInterrupt, SystemExit) as exErr:
 		print("\nEnding Example")
+<<<<<<< HEAD
 		sys.exit(0)
+=======
+		sys.exit(0)
+>>>>>>> 17749e8 (ism)

@@ -6,9 +6,6 @@ import time
 def init_imu(addr):
     imu = qwiic_ism330dhcx.QwiicISM330DHCX(address=addr)
 
-
-
-
     imu.begin()
     imu.device_reset()
     while not imu.get_device_reset():
