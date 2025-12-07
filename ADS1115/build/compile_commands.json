@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/hopper-pi-1/hopper-pi-1/ADS1115/build",
+  "command": "/usr/bin/c++  -I/home/hopper-pi-1/hopper-pi-1/ADS1115/build -I/home/hopper-pi-1/hopper-pi-1/ADS1115 -I/home/hopper-pi-1/hopper-pi-1/ADS1115/impl/unix/include -I/home/hopper-pi-1/hopper-pi-1/ADS1115/ADS1115/include -Wall -O0 -ggdb -o CMakeFiles/ADS1115_example.dir/example/ADS1115_example.cpp.o -c /home/hopper-pi-1/hopper-pi-1/ADS1115/example/ADS1115_example.cpp",
+  "file": "/home/hopper-pi-1/hopper-pi-1/ADS1115/example/ADS1115_example.cpp"
+},
+{
+  "directory": "/home/hopper-pi-1/hopper-pi-1/ADS1115/build",
+  "command": "/usr/bin/c++  -I/home/hopper-pi-1/hopper-pi-1/ADS1115/build -I/home/hopper-pi-1/hopper-pi-1/ADS1115 -I/home/hopper-pi-1/hopper-pi-1/ADS1115/impl/unix/include -I/home/hopper-pi-1/hopper-pi-1/ADS1115/ADS1115/include -Wall -O0 -ggdb -o CMakeFiles/ADS1115_example.dir/impl/unix/src/unix.cpp.o -c /home/hopper-pi-1/hopper-pi-1/ADS1115/impl/unix/src/unix.cpp",
+  "file": "/home/hopper-pi-1/hopper-pi-1/ADS1115/impl/unix/src/unix.cpp"
+}
+]

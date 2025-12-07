@@ -1,0 +1,5 @@
+/home/hopper-pi-1/hopper-pi-1/ADS1115/build/CMakeFiles/ADS1115_example.dir
+/home/hopper-pi-1/hopper-pi-1/ADS1115/build/CMakeFiles/edit_cache.dir
+/home/hopper-pi-1/hopper-pi-1/ADS1115/build/CMakeFiles/rebuild_cache.dir
+/home/hopper-pi-1/hopper-pi-1/ADS1115/build/ADS1115/CMakeFiles/edit_cache.dir
+/home/hopper-pi-1/hopper-pi-1/ADS1115/build/ADS1115/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wall -O0 -ggdb -rdynamic CMakeFiles/ADS1115_example.dir/example/ADS1115_example.cpp.o CMakeFiles/ADS1115_example.dir/impl/unix/src/unix.cpp.o -o bin/ADS1115_example  -lrt -lpthread 
